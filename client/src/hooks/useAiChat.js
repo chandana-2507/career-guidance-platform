@@ -92,7 +92,9 @@ export function useAiChat({ sessionId: initialSessionId = null, autoLoadSessions
         const { data } = await sendChatMessage(trimmed, activeSessionIdRef.current);
         setActiveSessionId(data.sessionId);
         setMessages((prev) => [...prev, { role: 'assistant', content: data.response }]);
-        await loadSessions();
+        if (autoLoadSessions) {
+          await loadSessions();
+        }
         return true;
       } catch (err) {
       setError(getFriendlyClientError(err));
@@ -101,7 +103,7 @@ export function useAiChat({ sessionId: initialSessionId = null, autoLoadSessions
         setLoading(false);
       }
     },
-    [loading, loadSessions],
+    [loading, loadSessions, autoLoadSessions],
   );
 
   const removeSession = useCallback(

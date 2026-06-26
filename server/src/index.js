@@ -20,11 +20,14 @@ import projectRoutes from './routes/projectRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import featureRoutes from './routes/featureRoutes.js';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
@@ -34,13 +37,12 @@ app.use('/api/resume', resumeRoutes);
 app.use('/api/skills', skillGapRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api', featureRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
-
-app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 app.use(notFound);
 app.use(errorHandler);
@@ -51,19 +53,24 @@ connectDB()
     geminiConfig.errors.forEach((message) => console.error(`[CareerPilot AI] ${message}`));
     geminiConfig.warnings.forEach((message) => console.warn(`[CareerPilot AI] ${message}`));
 
-    if (geminiConfig.ok && process.env.GEMINI_STARTUP_PROBE !== 'false') {
-      const probe = await probeGeminiConnection();
-      if (probe.ok) {
-        console.log(`[CareerPilot AI] Ready (verified with ${probe.model})`);
-      } else {
-        probe.errors?.forEach((message) => console.warn(`[CareerPilot AI] ${message}`));
-      }
-    }
-
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });
+
+    if (geminiConfig.ok && process.env.GEMINI_STARTUP_PROBE !== 'false') {
+      probeGeminiConnection()
+        .then((probe) => {
+          if (probe.ok) {
+            console.log(`[CareerPilot AI] Ready (verified with ${probe.model || 'chat agent'})`);
+          } else {
+            probe.errors?.forEach((message) => console.warn(`[CareerPilot AI] ${message}`));
+          }
+        })
+        .catch((err) => {
+          console.warn(`[CareerPilot AI] Startup probe error: ${err.message}`);
+        });
+    }
   })
   .catch((err) => {
     console.error('Failed to start server:', err.message);

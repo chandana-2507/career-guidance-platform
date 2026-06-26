@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import { invalidateAiClientCache } from '../services/aiApi';
+import { useToast } from '../components/Toast';
 
 export default function Profile() {
+  const { showToast } = useToast();
   const [profile, setProfile] = useState({
     name: '',
     college: '',
@@ -9,6 +12,12 @@ export default function Profile() {
     skills: [],
     interests: [],
     careerGoals: '',
+    preferredIndustry: '',
+    preferredRole: '',
+    branch: '',
+    certifications: [],
+    projects: [],
+    experience: '',
     resumeUrl: '',
     linkedinUrl: '',
     githubUrl: '',
@@ -18,6 +27,8 @@ export default function Profile() {
   const [skillInput, setSkillInput] = useState('');
   const [interestInput, setInterestInput] = useState('');
   const [portfolioInput, setPortfolioInput] = useState('');
+  const [certInput, setCertInput] = useState('');
+  const [projectInput, setProjectInput] = useState('');
   const [careerInterestInput, setCareerInterestInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -32,9 +43,15 @@ export default function Profile() {
           name: p.name || '',
           college: p.college || '',
           degree: p.degree || '',
+          branch: p.branch || '',
           skills: p.skills || [],
           interests: p.interests || [],
           careerGoals: p.careerGoals || '',
+          preferredIndustry: p.preferredIndustry || '',
+          preferredRole: p.preferredRole || '',
+          certifications: p.certifications || [],
+          projects: p.projects || [],
+          experience: p.experience || '',
           resumeUrl: p.resumeUrl || '',
           linkedinUrl: p.linkedinUrl || '',
           githubUrl: p.githubUrl || '',
@@ -82,14 +99,36 @@ export default function Profile() {
   };
   const removeCareerInterest = (c) => setProfile((prev) => ({ ...prev, careerInterests: prev.careerInterests.filter((x) => x !== c) }));
 
+  const addCertification = () => {
+    const v = certInput.trim();
+    if (v && !profile.certifications.includes(v)) {
+      setProfile((prev) => ({ ...prev, certifications: [...prev.certifications, v] }));
+      setCertInput('');
+    }
+  };
+  const removeCertification = (c) => setProfile((prev) => ({ ...prev, certifications: prev.certifications.filter((x) => x !== c) }));
+
+  const addProject = () => {
+    const v = projectInput.trim();
+    if (v && !profile.projects.includes(v)) {
+      setProfile((prev) => ({ ...prev, projects: [...prev.projects, v] }));
+      setProjectInput('');
+    }
+  };
+  const removeProject = (p) => setProfile((prev) => ({ ...prev, projects: prev.projects.filter((x) => x !== p) }));
+
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
     setMessage('');
     try {
       await api.put('/profile/update', profile);
+      invalidateAiClientCache();
+      sessionStorage.setItem('profileUpdated', Date.now().toString());
+      showToast('Profile saved. Recommendations refresh when you visit Careers.', 'success');
       setMessage('Profile saved.');
     } catch {
+      showToast('Failed to save profile.', 'error');
       setMessage('Failed to save.');
     } finally {
       setSaving(false);
@@ -152,6 +191,17 @@ export default function Profile() {
         </div>
 
         <div>
+          <label className="block text-sm font-medium text-slate-700">Branch / specialization</label>
+          <input
+            type="text"
+            className="input mt-1"
+            placeholder="e.g. Computer Science, Mechanical"
+            value={profile.branch}
+            onChange={(e) => setProfile((p) => ({ ...p, branch: e.target.value }))}
+          />
+        </div>
+
+        <div>
           <label className="block text-sm font-medium text-slate-700">Skills</label>
           <div className="mt-1 flex flex-wrap gap-2">
             {profile.skills.map((s) => (
@@ -203,6 +253,70 @@ export default function Profile() {
             onChange={(e) => setProfile((p) => ({ ...p, careerGoals: e.target.value }))}
             rows={3}
           />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-slate-700">Preferred industry</label>
+            <input
+              type="text"
+              className="input mt-1"
+              placeholder="e.g. Technology, Healthcare"
+              value={profile.preferredIndustry}
+              onChange={(e) => setProfile((p) => ({ ...p, preferredIndustry: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">Preferred role</label>
+            <input
+              type="text"
+              className="input mt-1"
+              placeholder="e.g. Software Engineer"
+              value={profile.preferredRole}
+              onChange={(e) => setProfile((p) => ({ ...p, preferredRole: e.target.value }))}
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700">Experience</label>
+          <textarea
+            className="input mt-1 min-h-[60px]"
+            placeholder="Internships, part-time work, volunteering..."
+            value={profile.experience}
+            onChange={(e) => setProfile((p) => ({ ...p, experience: e.target.value }))}
+            rows={2}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700">Certifications</label>
+          <div className="mt-1 flex flex-wrap gap-2">
+            {profile.certifications.map((c) => (
+              <span key={c} className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-sm text-emerald-800">
+                {c} <button type="button" onClick={() => removeCertification(c)} className="ml-1">&times;</button>
+              </span>
+            ))}
+          </div>
+          <div className="mt-2 flex gap-2">
+            <input className="input flex-1" placeholder="Add certification" value={certInput} onChange={(e) => setCertInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCertification())} />
+            <button type="button" onClick={addCertification} className="btn-secondary">Add</button>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700">Projects</label>
+          <div className="mt-1 flex flex-wrap gap-2">
+            {profile.projects.map((p) => (
+              <span key={p} className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm">
+                {p} <button type="button" onClick={() => removeProject(p)} className="ml-1">&times;</button>
+              </span>
+            ))}
+          </div>
+          <div className="mt-2 flex gap-2">
+            <input className="input flex-1" placeholder="Add project" value={projectInput} onChange={(e) => setProjectInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addProject())} />
+            <button type="button" onClick={addProject} className="btn-secondary">Add</button>
+          </div>
         </div>
 
         <div>

@@ -32,8 +32,8 @@ export default function Layout() {
               </>
             ) : (
               <>
-                <Link to="/login" className="text-slate-600 hover:text-primary-600">Login</Link>
-                <Link to="/signup" className="btn-primary">Sign up</Link>
+                <Link to="/login" className="text-slate-600 hover:text-primary-600">Sign In</Link>
+                <Link to="/signup" className="btn-primary">Get Started</Link>
               </>
             )}
           </nav>

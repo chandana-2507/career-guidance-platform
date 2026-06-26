@@ -1,109 +1,43 @@
 # AI-Based Career Guidance Platform
 
-A production-level career guidance platform for students with AI-powered recommendations, resume analysis, skill gap analysis, and a career chatbot.
+A production-level career guidance platform for students with **multi-agent Gemini AI**, personalized recommendations, resume analysis, skill gap analysis, and CareerPilot AI counseling.
 
 ## Tech Stack
 
 - **Frontend:** React.js, Tailwind CSS, Axios, React Router, Chart.js
 - **Backend:** Node.js, Express.js, JWT, REST API
 - **Database:** MongoDB with Mongoose
-- **AI:** OpenAI API (chatbot, career explanations, resume suggestions)
+- **AI:** Google Gemini — **8 independent agents**, each with its own API key
 - **Auth:** Google OAuth + JWT
 
-## Features
+## Multi-Agent AI Architecture
 
-- User authentication (signup, login, Google OAuth)
-- User profile with skills, interests, resume upload
-- AI career recommendations based on skills/interests
-- Personalized learning roadmaps
-- AI resume analyzer with score and suggestions
-- Skill gap analysis
-- AI career chatbot
-- Internship/job recommendations
-- Career comparison tool
-- Project recommendations
-- Admin panel
-- Data analytics dashboard
+Each feature uses a dedicated Gemini API key to prevent quota exhaustion across modules:
+
+| Agent | Env Variable | Feature |
+|-------|--------------|---------|
+| CareerPilot AI | `GEMINI_CHAT_API_KEY` | Chatbot / counseling |
+| Career Recommendation | `GEMINI_RECOMMEND_API_KEY` | Career recommendations |
+| Career Comparison | `GEMINI_COMPARE_API_KEY` | Compare careers |
+| Resume Analyzer | `GEMINI_RESUME_API_KEY` | Resume analysis |
+| Internship | `GEMINI_INTERNSHIP_API_KEY` | Internship suggestions |
+| Project | `GEMINI_PROJECT_API_KEY` | Project ideas |
+| Analytics | `GEMINI_ANALYTICS_API_KEY` | Analytics insights |
+| Roadmap | `GEMINI_ROADMAP_API_KEY` | Roadmaps & skill gap |
+
+Shared settings: `GEMINI_MODEL`, `GEMINI_FALLBACK_MODELS`, `GEMINI_REQUEST_TIMEOUT_MS`
 
 ## Setup
 
-### Prerequisites
-
-- Node.js 18+
-- MongoDB (local or Atlas)
-- Google Cloud Console project (for OAuth)
-- OpenAI API key
-
-### Installation
-
 ```bash
 npm run install:all
-```
-
-### Environment Variables
-
-Copy `.env.example` to `.env` in the project root and in `server/`:
-
-```bash
-cp .env.example .env
 cp .env.example server/.env
+# Fill in all GEMINI_*_API_KEY values
+npm run dev
 ```
 
-Fill in:
-- `MONGODB_URI` - MongoDB connection string
-- `JWT_SECRET` - Random secret for JWT
-- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` - From Google Cloud Console
-- `OPENAI_API_KEY` - From OpenAI
-
-### Run Development
+## AI Self-Test
 
 ```bash
-# Run both client and server
-npm run dev
-
-# Or separately:
-npm run server   # Backend on http://localhost:5000
-npm run client   # Frontend on http://localhost:5173
+cd server && npm run ai:test
 ```
-
-### Default Admin
-
-After first run, create an admin user via register and set `role: 'admin'` in MongoDB, or use the seed script.
-
-## API Overview
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /api/auth/register | Register user |
-| POST | /api/auth/login | Login |
-| POST | /api/auth/google | Google OAuth |
-| GET | /api/profile | Get profile (protected) |
-| PUT | /api/profile/update | Update profile (protected) |
-| GET | /api/careers/recommend | Get career recommendations |
-| GET | /api/roadmap/:career | Get roadmap for career |
-| POST | /api/resume/upload | Upload resume |
-| GET | /api/resume/analyze | Get resume analysis |
-| GET | /api/skills/gap/:career | Skill gap for career |
-| POST | /api/chatbot | AI chatbot message |
-| GET | /api/jobs/:career | Jobs for career |
-| GET | /api/careers/compare | Compare careers |
-| GET | /api/projects/:career | Projects for career |
-| GET | /api/analytics/* | Analytics (admin) |
-| * | /api/admin/* | Admin routes |
-
-## Project Structure
-
-```
-/client          - React frontend
-/server          - Express backend
-  /src
-    /controllers
-    /routes
-    /models
-    /middleware
-    /services
-```
-
-## License
-
-MIT

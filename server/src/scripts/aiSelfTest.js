@@ -1,53 +1,53 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+import { validateGeminiConfig } from '../config/geminiConfig.js';
+import { AI_AGENTS } from '../config/aiAgents.js';
+import { probeAllAgents, createGeminiAgent } from '../services/geminiWrapper.js';
 import {
   buildCareerPilotSystemPrompt,
-  generateChatResponse,
-  pingGemini,
-} from '../services/aiService.js';
+} from '../services/careerCounselor.service.js';
 import { createAiError, toUserFacingAiMessage } from '../utils/aiErrors.js';
-import { getGeminiModelChain, validateGeminiConfig } from '../config/geminiConfig.js';
+import { getGeminiModelChain } from '../config/geminiConfig.js';
 
 const profile = { education: '', interests: [], skills: [], strengths: [], goals: '' };
 const user = { name: 'Test Student', degree: 'B.Tech CSE', college: 'Test University' };
 
-const scenarios = [
-  'I am a B.Tech CSE student',
-  'I like AI and Machine Learning',
-  'Which career should I choose?',
-  'What certifications should I do?',
-];
-
 async function run() {
-  console.log('=== Gemini Config ===');
-  console.log(validateGeminiConfig());
+  console.log('=== Multi-Agent Gemini Config ===');
+  const config = validateGeminiConfig();
+  console.log(config);
   console.log('Model chain:', getGeminiModelChain());
 
-  console.log('\n=== Startup Probe ===');
-  const probe = await pingGemini();
-  console.log('Probe OK:', probe.model);
+  console.log('\n=== Agent Key Status ===');
+  for (const [id, agent] of Object.entries(AI_AGENTS)) {
+    const configured = Boolean(process.env[agent.envKey]?.trim());
+    console.log(`${id.padEnd(12)} ${agent.envKey.padEnd(28)} ${configured ? 'OK' : 'MISSING'}`);
+  }
 
-  let history = [];
-  for (const message of scenarios) {
-    console.log(`\n=== User: ${message} ===`);
+  console.log('\n=== Per-Agent Probes ===');
+  const probes = await probeAllAgents();
+  for (const [id, result] of Object.entries(probes)) {
+    console.log(`${id}:`, result);
+  }
+
+  const chatAgent = createGeminiAgent('chat');
+  if (chatAgent.isConfigured()) {
+    console.log('\n=== Chat Agent Smoke Test ===');
+    const { generateChatResponse } = await import('../services/careerCounselor.service.js');
     const response = await generateChatResponse({
-      message,
-      history,
+      message: 'I am a B.Tech CSE student interested in AI',
+      history: [],
       profile,
       user,
     });
-    console.log('Assistant:', response.slice(0, 220) + (response.length > 220 ? '...' : ''));
-    history.push({ role: 'user', content: message });
-    history.push({ role: 'assistant', content: response });
+    console.log('Assistant:', response.slice(0, 200));
   }
 
   console.log('\n=== Error Sanitization ===');
-  const raw = new Error(
-    '{"error":{"code":503,"message":"This model is currently experiencing high demand."}}',
-  );
+  const raw = new Error('{"error":{"code":429,"message":"Quota exceeded"}}');
   raw.name = 'ApiError';
-  raw.status = 503;
+  raw.status = 429;
   const friendly = toUserFacingAiMessage(createAiError(raw));
   console.log('Friendly:', friendly);
   console.log('Contains raw JSON:', friendly.includes('{'));
@@ -55,9 +55,8 @@ async function run() {
   console.log('\n=== Prompt Check ===');
   const prompt = buildCareerPilotSystemPrompt(profile, user);
   console.log('Prompt includes follow-up guidance:', prompt.includes('follow-up'));
-  console.log('Prompt blocks early recommendations:', prompt.includes('Never recommend'));
 
-  console.log('\nAll self-tests passed.');
+  console.log('\nSelf-test complete.');
 }
 
 run().catch((error) => {

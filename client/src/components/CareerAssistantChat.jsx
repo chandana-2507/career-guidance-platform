@@ -90,7 +90,12 @@ function ChatComposer({ input, setInput, onSend, loading, disabled }) {
           placeholder="Ask about careers, skills, certifications, salaries..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
           disabled={loading || disabled}
         />
         <button
@@ -227,8 +232,9 @@ export function AiChatInterface({
         )}
 
         {error && (
-          <div className="border-b border-red-100 bg-red-50 px-4 py-2 text-xs text-red-700">
-            {error}
+          <div className="border-b border-red-100 bg-red-50 px-4 py-2 text-xs text-red-700 flex items-center justify-between gap-2">
+            <span>{error}</span>
+            <button type="button" className="shrink-0 underline" onClick={() => setError(null)}>Dismiss</button>
           </div>
         )}
 

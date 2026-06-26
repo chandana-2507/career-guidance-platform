@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '../utils/AuthContext';
 
 export default function Home() {
+  const { user } = useAuth();
+
   return (
     <div>
       <section className="relative overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-slate-900 text-white">
@@ -10,15 +13,31 @@ export default function Home() {
             Find Your Perfect Career Path
           </h1>
           <p className="mt-6 max-w-2xl text-lg text-primary-100">
-            AI-powered career guidance for students. Get personalized recommendations, skill gap analysis, resume feedback, and a career mentor chatbot.
+            AI-powered career guidance for students. Get personalized recommendations, skill gap analysis, resume feedback, and CareerPilot AI counseling.
           </p>
           <div className="mt-10 flex flex-wrap gap-4">
-            <Link to="/signup" className="rounded-lg bg-white px-6 py-3 font-medium text-primary-700 shadow-lg hover:bg-primary-50 transition-colors">
-              Get Started
-            </Link>
-            <Link to="/login" className="rounded-lg border-2 border-white px-6 py-3 font-medium text-white hover:bg-white/10 transition-colors">
-              Sign In
-            </Link>
+            {user ? (
+              <>
+                <Link to="/dashboard" className="rounded-lg bg-white px-6 py-3 font-medium text-primary-700 shadow-lg hover:bg-primary-50 transition-colors">
+                  Go to Dashboard
+                </Link>
+                <Link to="/profile" className="rounded-lg border-2 border-white px-6 py-3 font-medium text-white hover:bg-white/10 transition-colors">
+                  Profile
+                </Link>
+                <Link to="/chatbot" className="rounded-lg border-2 border-white px-6 py-3 font-medium text-white hover:bg-white/10 transition-colors">
+                  AI Counsellor
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/signup" className="rounded-lg bg-white px-6 py-3 font-medium text-primary-700 shadow-lg hover:bg-primary-50 transition-colors">
+                  Get Started
+                </Link>
+                <Link to="/login" className="rounded-lg border-2 border-white px-6 py-3 font-medium text-white hover:bg-white/10 transition-colors">
+                  Sign In
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>

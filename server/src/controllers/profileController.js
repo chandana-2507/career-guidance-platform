@@ -21,15 +21,42 @@ export const getProfile = async (req, res, next) => {
 export const updateProfile = async (req, res, next) => {
   try {
     const allowed = [
-      'name', 'college', 'degree', 'skills', 'interests', 'careerGoals',
-      'resumeUrl', 'resumePublicId', 'linkedinUrl', 'githubUrl', 'portfolioLinks', 'careerInterests', 'avatar'
+      'name',
+      'college',
+      'degree',
+      'skills',
+      'interests',
+      'careerGoals',
+      'resumeUrl',
+      'resumePublicId',
+      'linkedinUrl',
+      'githubUrl',
+      'portfolioLinks',
+      'careerInterests',
+      'preferredIndustry',
+      'preferredRole',
+      'branch',
+      'certifications',
+      'projects',
+      'experience',
+      'avatar',
     ];
     const updates = {};
     Object.keys(req.body).forEach((key) => {
       if (allowed.includes(key)) updates[key] = req.body[key];
     });
-    const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true }).select('-password');
-    res.json({ success: true, profile: user });
+    const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true }).select(
+      '-password',
+    );
+
+    const { syncUserToAiProfile } = await import('../services/profileSyncService.js');
+    await syncUserToAiProfile(req.user.id);
+
+    res.json({
+      success: true,
+      profile: user,
+      message: 'Profile updated. Career recommendations will refresh automatically.',
+    });
   } catch (error) {
     next(error);
   }

@@ -21,6 +21,12 @@ const userSchema = new mongoose.Schema(
     githubUrl: { type: String, default: '' },
     portfolioLinks: [{ type: String }],
     careerInterests: [{ type: String }],
+    preferredIndustry: { type: String, default: '', trim: true },
+    preferredRole: { type: String, default: '', trim: true },
+    branch: { type: String, default: '', trim: true },
+    certifications: [{ type: String, trim: true }],
+    projects: [{ type: String, trim: true }],
+    experience: { type: String, default: '' },
   },
   { timestamps: true }
 );
